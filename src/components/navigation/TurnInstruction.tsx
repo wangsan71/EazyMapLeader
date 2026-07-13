@@ -1,0 +1,48 @@
+import React from 'react';
+import { formatDistance } from '../../utils/formatters';
+import { getManeuverText } from '../../utils/formatters';
+
+interface TurnInstructionProps {
+  maneuver: string;
+  modifier?: string;
+  roadName: string;
+  distance: number;
+  isActive?: boolean;
+}
+
+export function TurnInstruction({
+  maneuver,
+  modifier,
+  roadName,
+  distance,
+  isActive = false,
+}: TurnInstructionProps) {
+  const text = getManeuverText(maneuver, modifier);
+
+  return (
+    <div
+      className={`flex items-center gap-3 py-3 px-2 rounded-lg transition-colors ${
+        isActive ? 'bg-blue-50 text-blue-900' : 'text-gray-700'
+      }`}
+    >
+      <div
+        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg ${
+          isActive ? 'bg-blue-600 text-white' : 'bg-gray-100'
+        }`}
+      >
+        {maneuver === 'arrive' ? '🏁' : maneuver === 'depart' ? '🚗' : '→'}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className={`font-medium text-sm ${isActive ? '' : ''}`}>
+          {text}
+        </div>
+        {roadName && (
+          <div className="text-xs text-gray-500 truncate">{roadName}</div>
+        )}
+      </div>
+      <div className="flex-shrink-0 text-sm font-medium text-right">
+        {formatDistance(distance)}
+      </div>
+    </div>
+  );
+}
