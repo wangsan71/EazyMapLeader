@@ -19,6 +19,7 @@ import { useRouting } from './hooks/useRouting';
 import { useNavigation } from './hooks/useNavigation';
 import { useMapRotation } from './hooks/useMapRotation';
 import { loadRoads, hasRoads } from './services/roads';
+import { bearing as calcBearing, distance as calcDistance } from './utils/geo';
 import type { NavPoint } from './types/navigation';
 
 function AppContent() {
@@ -82,21 +83,51 @@ function AppContent() {
     }
   }, [position, orientation]);
 
-  // Map following and bearing during navigation
+  // Head-up map following: recenter, rotate to travel direction, and tilt the
+  // camera during navigation so the road ahead points "up".
+  const prevFollowRef = React.useRef<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
     if (!position || !mapRef.current) return;
     const map = mapRef.current.getMap();
 
     if (ctx.state === 'navigating') {
-      map.setCenter([position.lng, position.lat]);
+      map.easeTo({
+        center: [position.lng, position.lat],
+        pitch: 55,
+        duration: 300,
+      });
 
+      // Determine heading with graceful fallbacks:
+      // 1. GPS heading (most reliable while moving)
+      // 2. device orientation (compass) when enabled
+      // 3. bearing derived from the GPS track (previous -> current)
+      let heading: number | null = null;
       if (position.heading !== null && position.heading >= 0) {
-        setBearing(position.heading);
+        heading = position.heading;
       } else if (orientation.isEnabled && orientation.correctedHeading !== null) {
-        setBearing(orientation.correctedHeading);
+        heading = orientation.correctedHeading;
+      } else if (prevFollowRef.current) {
+        const prev = prevFollowRef.current;
+        const moved = calcDistance(prev.lat, prev.lng, position.lat, position.lng);
+        if (moved > 3) {
+          heading = calcBearing(prev.lat, prev.lng, position.lat, position.lng);
+        }
       }
+
+      if (heading !== null) setBearing(heading);
+      prevFollowRef.current = { lat: position.lat, lng: position.lng };
     }
   }, [position, ctx.state, orientation.isEnabled, orientation.correctedHeading, mapRef, setBearing]);
+
+  // Reset camera tilt/rotation when leaving navigation mode.
+  useEffect(() => {
+    if (ctx.state === 'navigating') return;
+    prevFollowRef.current = null;
+    const map = mapRef.current?.getMap();
+    if (map && (map.getPitch() !== 0 || map.getBearing() !== 0)) {
+      map.easeTo({ pitch: 0, bearing: 0, duration: 300 });
+    }
+  }, [ctx.state, mapRef]);
 
   // Update road matching
   useEffect(() => {
@@ -117,15 +148,31 @@ function AppContent() {
   const handleSearchSelect = useCallback(
     (lat: number, lng: number, name: string) => {
       const point: NavPoint = { lat, lng, name: name.split(',')[0] };
+      // If an origin is already explicitly set, the search result is the destination.
       if (selectedOrigin) {
         setSelectedDest(point);
         setDestination(point);
-      } else {
-        setSelectedOrigin(point);
-        setOrigin(point);
+        return;
       }
+      // No origin set: if we have a current GPS fix, use it as the origin
+      // automatically and treat the searched place as the destination.
+      if (position) {
+        const gpsOrigin: NavPoint = {
+          lat: position.lat,
+          lng: position.lng,
+          name: '目前位置',
+        };
+        setSelectedOrigin(gpsOrigin);
+        setOrigin(gpsOrigin);
+        setSelectedDest(point);
+        setDestination(point);
+        return;
+      }
+      // No origin and no GPS: fall back to using the first selection as origin.
+      setSelectedOrigin(point);
+      setOrigin(point);
     },
-    [selectedOrigin, setOrigin, setDestination]
+    [selectedOrigin, position, setOrigin, setDestination]
   );
 
   const handleMapClick = useCallback(
@@ -140,12 +187,22 @@ function AppContent() {
         setOrigin(point);
         setMapClickMode(null);
       } else if (mapClickMode === 'dest') {
+        // If no origin has been set yet, use the current GPS position as origin.
+        if (!selectedOrigin && position) {
+          const gpsOrigin: NavPoint = {
+            lat: position.lat,
+            lng: position.lng,
+            name: '目前位置',
+          };
+          setSelectedOrigin(gpsOrigin);
+          setOrigin(gpsOrigin);
+        }
         setSelectedDest(point);
         setDestination(point);
         setMapClickMode(null);
       }
     },
-    [mapClickMode, setOrigin, setDestination]
+    [mapClickMode, selectedOrigin, position, setOrigin, setDestination]
   );
 
   // Calculate route when both points are set

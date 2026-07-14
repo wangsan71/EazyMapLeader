@@ -10,10 +10,12 @@ interface LaneCardProps {
 export function LaneCard({ road, direction }: LaneCardProps) {
   if (!road) return null;
 
-  const lanes =
-    direction === 'forward'
-      ? road.lanesForward || []
-      : road.lanesBackward || [];
+  const forward = road.lanesForward || [];
+  const backward = road.lanesBackward || [];
+  const primary = direction === 'forward' ? forward : backward;
+  // Fall back to the opposite direction's lanes if the matched direction has
+  // none (common for one-way roads where only one set is populated).
+  const lanes = primary.length > 0 ? primary : direction === 'forward' ? backward : forward;
   const total = lanes.length;
   const dirText = direction === 'forward' ? '順向' : '反向';
 

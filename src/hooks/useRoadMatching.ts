@@ -41,7 +41,11 @@ export function useRoadMatching() {
         effectiveHeading = roadBearing(nearest.road);
       }
 
-      const dir = getDirection(nearest, effectiveHeading);
+      // For one-way roads there is only a forward lane set; always show it
+      // regardless of the computed heading (avoids blank "backward" cards).
+      const dir = nearest.road.oneway
+        ? 'forward'
+        : getDirection(nearest, effectiveHeading);
 
       setMatch(nearest);
       setCurrentRoad(nearest.road);
