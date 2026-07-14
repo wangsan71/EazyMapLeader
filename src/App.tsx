@@ -46,6 +46,11 @@ function AppContent() {
     });
   }, []);
 
+  // Auto-start GPS on mount for better UX
+  useEffect(() => {
+    startGps();
+  }, [startGps]);
+
   // Update navigation context with GPS
   useEffect(() => {
     if (position) {
