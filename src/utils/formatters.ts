@@ -77,3 +77,34 @@ export function getManeuverIcon(
 
   return modifier ? icons[modifier] || '→' : '→';
 }
+
+/**
+ * Map an OSRM maneuver (type + modifier) to a LaneGo icon key so navigation
+ * turn arrows match the lane-guidance icon set instead of a generic arrow.
+ * Returns null for maneuvers that should render a non-SVG glyph
+ * (arrive/depart/roundabout).
+ */
+export function getManeuverIconKey(
+  type: string,
+  modifier?: string
+): string | null {
+  if (type === 'arrive' || type === 'depart') return null;
+  if (type === 'roundabout' || type === 'rotary') return null;
+
+  const map: Record<string, string> = {
+    uturn: 'u_turn',
+    'sharp right': 'right',
+    right: 'right',
+    'slight right': 'slight_right',
+    straight: 'straight',
+    'slight left': 'slight_left',
+    left: 'left',
+    'sharp left': 'left',
+  };
+
+  if (modifier && map[modifier]) return map[modifier];
+  if (type === 'continue' || type === 'new name' || type === 'depart') {
+    return 'straight';
+  }
+  return 'straight';
+}

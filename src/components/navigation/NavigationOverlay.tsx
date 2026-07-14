@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigationContext } from '../../context/NavigationContext';
 import { TurnList } from './TurnList';
-import { formatDistance, formatDuration } from '../../utils/formatters';
+import {
+  formatDistance,
+  formatDuration,
+  getManeuverIconKey,
+} from '../../utils/formatters';
+import { LaneIcon } from '../lane/LaneIcons';
 
 export function NavigationOverlay() {
   const { state: ctx } = useNavigationContext();
@@ -21,16 +26,18 @@ export function NavigationOverlay() {
       <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-10">
         <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-4">
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg font-bold">
-              {currentStep
-                ? (currentStep.maneuver.modifier?.includes('right')
-                  ? '→'
-                  : currentStep.maneuver.modifier?.includes('left')
-                    ? '←'
-                    : currentStep.maneuver.type === 'arrive'
-                      ? '🏁'
-                      : '↑')
-                : '↑'}
+            <div className="flex-shrink-0 w-11 h-11 flex items-center justify-center">
+              {(() => {
+                const t = currentStep?.maneuver.type;
+                const m = currentStep?.maneuver.modifier;
+                const key = currentStep ? getManeuverIconKey(t!, m) : 'straight';
+                if (key) return <LaneIcon icon={key} size={44} />;
+                return (
+                  <span className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg">
+                    {t === 'arrive' ? '🏁' : t === 'depart' ? '🚗' : '🔄'}
+                  </span>
+                );
+              })()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-lg truncate">

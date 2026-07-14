@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatDistance } from '../../utils/formatters';
-import { getManeuverText } from '../../utils/formatters';
+import { getManeuverText, getManeuverIconKey } from '../../utils/formatters';
+import { LaneIcon } from '../lane/LaneIcons';
 
 interface TurnInstructionProps {
   maneuver: string;
@@ -18,6 +19,7 @@ export function TurnInstruction({
   isActive = false,
 }: TurnInstructionProps) {
   const text = getManeuverText(maneuver, modifier);
+  const iconKey = getManeuverIconKey(maneuver, modifier);
 
   return (
     <div
@@ -25,12 +27,18 @@ export function TurnInstruction({
         isActive ? 'bg-blue-50 text-blue-900' : 'text-gray-700'
       }`}
     >
-      <div
-        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg ${
-          isActive ? 'bg-blue-600 text-white' : 'bg-gray-100'
-        }`}
-      >
-        {maneuver === 'arrive' ? '🏁' : maneuver === 'depart' ? '🚗' : '→'}
+      <div className="flex-shrink-0 w-9 h-9 flex items-center justify-center">
+        {iconKey ? (
+          <LaneIcon icon={iconKey} size={36} />
+        ) : (
+          <span
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${
+              isActive ? 'bg-blue-600 text-white' : 'bg-gray-100'
+            }`}
+          >
+            {maneuver === 'arrive' ? '🏁' : maneuver === 'depart' ? '🚗' : '🔄'}
+          </span>
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <div className={`font-medium text-sm ${isActive ? '' : ''}`}>

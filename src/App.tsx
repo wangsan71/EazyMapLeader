@@ -240,7 +240,7 @@ function AppContent() {
   const isLoading = !roadsLoaded || routingLoading;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden">
+    <div className="relative w-full h-full overflow-hidden">
       {/* Map */}
       <MapView onClick={handleMapClick} mapRef={mapRef} cursor={mapClickMode ? 'crosshair' : 'grab'}>
         <RoadLayer visible={roadsLoaded} />
