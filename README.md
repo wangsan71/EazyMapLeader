@@ -5,10 +5,12 @@ EazyMapLeader is a browser-based navigation map for Macau. It combines an OpenSt
 ## Features
 
 - Search locations and select origins or destinations directly on the map
-- Display driving routes with turn-by-turn instructions
-- Follow the current GPS position during navigation
-- Show current road and lane guidance when local road data matches the GPS position
-- Responsive controls for desktop and mobile browsers
+- Auto-use the current GPS position as the origin when only a destination is chosen
+- Display driving routes with turn-by-turn instructions using LaneGo turn icons
+- Head-up navigation: the map tilts and rotates to follow the direction of travel
+- Follow the current GPS position during navigation, with a one-tap cancel control in the trip summary bar
+- Show current road and lane guidance (LaneGo icon set) when local road data matches the GPS position
+- Responsive, full-screen layout for desktop and mobile browsers, including safe-area support for notched devices
 
 ## Development
 

@@ -9,7 +9,7 @@ import {
 import { LaneIcon } from '../lane/LaneIcons';
 
 export function NavigationOverlay() {
-  const { state: ctx } = useNavigationContext();
+  const { state: ctx, stopNavigation } = useNavigationContext();
   const [showSteps, setShowSteps] = useState(false);
 
   if (ctx.state !== 'navigating' || !ctx.route || !ctx.route.legs[0]) {
@@ -74,6 +74,13 @@ export function NavigationOverlay() {
           <span>{formatDistance(remainingDistance)}</span>
           <span className="text-gray-400">|</span>
           <span>{formatDuration(remainingDuration)}</span>
+          <span className="text-gray-400">|</span>
+          <button
+            onClick={stopNavigation}
+            className="text-red-400 hover:text-red-300 font-medium transition-colors"
+          >
+            取消
+          </button>
         </div>
       </div>
     </>
