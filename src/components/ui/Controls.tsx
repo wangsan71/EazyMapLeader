@@ -6,7 +6,7 @@ interface ControlsProps {
   orientationEnabled: boolean;
   onToggleOrientation: () => void;
   deviceHeading: number | null;
-  onResetBearing: () => void;
+  onResetBearing?: () => void;
 }
 
 export function Controls({
@@ -15,7 +15,6 @@ export function Controls({
   orientationEnabled,
   onToggleOrientation,
   deviceHeading,
-  onResetBearing,
 }: ControlsProps) {
   return (
     <div className="absolute bottom-24 right-4 z-10 flex flex-col gap-2">

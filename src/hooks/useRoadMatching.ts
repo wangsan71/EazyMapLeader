@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import type { Road, RoadMatch } from '../types/roads';
 import { findNearestRoad, getDirection, roadBearing } from '../utils/lanes';
 import { getRoads } from '../services/roads';
-import { normalizeAngle } from '../utils/geo';
 
 const MAX_DISTANCE = 120;
 

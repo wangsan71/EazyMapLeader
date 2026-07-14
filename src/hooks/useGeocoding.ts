@@ -25,7 +25,7 @@ export function useGeocoding() {
       try {
         const data = await searchPlaces(query);
         setResults(data);
-      } catch (e) {
+      } catch {
         setError('搜索失敗');
         setResults([]);
       } finally {

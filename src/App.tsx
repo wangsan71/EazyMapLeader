@@ -73,9 +73,9 @@ function AppContent() {
       position.heading !== null &&
       position.heading >= 0
     ) {
-      orientation.updateOffset(position.heading);
+      orientation.updateOffset?.(position.heading);
     }
-  }, [position, orientation.isEnabled, orientation.smoothedHeading]);
+  }, [position, orientation]);
 
   // Map following and bearing during navigation
   useEffect(() => {
@@ -91,7 +91,7 @@ function AppContent() {
         setBearing(orientation.correctedHeading);
       }
     }
-  }, [position, ctx.state, orientation.isEnabled, orientation.correctedHeading]);
+  }, [position, ctx.state, orientation.isEnabled, orientation.correctedHeading, mapRef, setBearing]);
 
   // Update road matching
   useEffect(() => {
@@ -102,7 +102,7 @@ function AppContent() {
       position.heading,
       orientation.correctedHeading
     );
-  }, [position, orientation.correctedHeading]);
+  }, [position, orientation.correctedHeading, updateRoadMatch]);
 
   // Check navigation progress on each throttled GPS update.
   useEffect(() => {

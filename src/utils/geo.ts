@@ -86,7 +86,6 @@ export function compassHeading(
   const _y = gamma ? gamma * degtorad : 0;
   const _z = alpha ? alpha * degtorad : 0;
 
-  const cX = Math.cos(_x);
   const cY = Math.cos(_y);
   const cZ = Math.cos(_z);
   const sX = Math.sin(_x);

@@ -56,5 +56,3 @@ export const LaneIcon: React.FC<LaneIconProps> = ({
     />
   );
 };
-
-export { iconPaths };
