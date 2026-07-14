@@ -70,11 +70,11 @@ export function NavigationOverlay() {
 
       {/* Bottom bar - summary */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
-        <div className="flex items-center gap-4 bg-black/75 backdrop-blur-sm text-white px-5 py-2.5 rounded-full text-sm">
+        <div className="flex items-center gap-5 whitespace-nowrap bg-black/75 backdrop-blur-sm text-white px-7 py-2.5 rounded-full text-sm">
           <span>{formatDistance(remainingDistance)}</span>
-          <span className="text-gray-400">|</span>
+          <span className="text-gray-500">|</span>
           <span>{formatDuration(remainingDuration)}</span>
-          <span className="text-gray-400">|</span>
+          <span className="text-gray-500">|</span>
           <button
             onClick={stopNavigation}
             className="text-red-400 hover:text-red-300 font-medium transition-colors"

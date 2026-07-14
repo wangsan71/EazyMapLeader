@@ -336,9 +336,15 @@ function AppContent() {
         onResetBearing={resetBearing}
       />
 
-      {/* Speed panel - always visible when GPS active */}
+      {/* Speed panel - always visible when GPS active.
+          Lift it above the trip-summary pill while navigating so it does
+          not overlap the bottom bar. */}
       {isGpsActive && position && (
-        <div className="absolute bottom-4 left-4 z-10">
+        <div
+          className={`absolute left-4 z-10 ${
+            ctx.state === 'navigating' ? 'bottom-20' : 'bottom-4'
+          }`}
+        >
           <SpeedPanel
             speed={position.speed}
             heading={position.heading}
