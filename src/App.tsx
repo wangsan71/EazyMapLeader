@@ -90,8 +90,8 @@ function AppContent() {
     }
   }, [position, orientation]);
 
-  // Follow the GPS during navigation. Head-up rotation and tilt are opt-in via
-  // the orientation control; the default remains centered and north-up.
+  // Follow the GPS during navigation. Head-up rotation is opt-in via the
+  // orientation control; the map remains in a top-down view.
   const prevFollowRef = React.useRef<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
     if (!position || !mapRef.current) return;
@@ -120,14 +120,14 @@ function AppContent() {
       map.easeTo({
         center: [position.lng, position.lat],
         bearing: heading,
-        pitch: orientation.isEnabled ? 55 : 0,
+        pitch: 0,
         duration: 300,
       });
       prevFollowRef.current = { lat: position.lat, lng: position.lng };
     }
   }, [position, ctx.state, orientation.isEnabled, orientation.correctedHeading, mapRef]);
 
-  // Reset camera tilt/rotation when leaving navigation mode.
+  // Reset camera rotation when leaving navigation mode.
   useEffect(() => {
     if (ctx.state === 'navigating') return;
     prevFollowRef.current = null;
