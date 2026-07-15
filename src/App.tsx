@@ -31,7 +31,13 @@ function AppContent() {
 
   const orientation = useOrientation();
   const { currentRoad, direction, update: updateRoadMatch } = useRoadMatching();
-  const { loading: routingLoading, error: routingError, calculateRoute } = useRouting();
+  const {
+    loading: routingLoading,
+    error: routingError,
+    routes,
+    calculateRoute,
+    clear: clearRoutes,
+  } = useRouting();
   const { startNavigation, stopNavigation, checkProgress } = useNavigation();
   const { mapRef, resetBearing } = useMapRotation();
 
@@ -83,37 +89,37 @@ function AppContent() {
     }
   }, [position, orientation]);
 
-  // Head-up map following: recenter, rotate to travel direction, and tilt the
-  // camera during navigation so the road ahead points "up".
+  // Follow the GPS during navigation. Head-up rotation and tilt are opt-in via
+  // the orientation control; the default remains centered and north-up.
   const prevFollowRef = React.useRef<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
     if (!position || !mapRef.current) return;
     const map = mapRef.current.getMap();
 
     if (ctx.state === 'navigating') {
-      // Determine heading with graceful fallbacks:
-      // 1. GPS heading (most reliable while moving)
-      // 2. device orientation (compass) when enabled
-      // 3. bearing derived from the GPS track (previous -> current)
-      let heading: number | null = null;
-      if (position.heading !== null && position.heading >= 0) {
-        heading = position.heading;
-      } else if (orientation.isEnabled && orientation.correctedHeading !== null) {
-        heading = orientation.correctedHeading;
-      } else if (prevFollowRef.current) {
-        const prev = prevFollowRef.current;
-        const moved = calcDistance(prev.lat, prev.lng, position.lat, position.lng);
-        if (moved > 3) {
-          heading = calcBearing(prev.lat, prev.lng, position.lat, position.lng);
+      let heading = 0;
+      if (orientation.isEnabled) {
+        // Prefer GPS direction while moving, then the device compass, then the
+        // bearing inferred from successive GPS fixes.
+        if (position.heading !== null && position.heading >= 0) {
+          heading = position.heading;
+        } else if (orientation.correctedHeading !== null) {
+          heading = orientation.correctedHeading;
+        } else if (prevFollowRef.current) {
+          const prev = prevFollowRef.current;
+          const moved = calcDistance(prev.lat, prev.lng, position.lat, position.lng);
+          if (moved > 3) {
+            heading = calcBearing(prev.lat, prev.lng, position.lat, position.lng);
+          } else {
+            heading = map.getBearing();
+          }
         }
       }
 
-      // Keep all camera changes in one animation. A second easeTo for bearing
-      // would interrupt the center animation and leave the GPS marker off-center.
       map.easeTo({
         center: [position.lng, position.lat],
-        bearing: heading ?? map.getBearing(),
-        pitch: 55,
+        bearing: heading,
+        pitch: orientation.isEnabled ? 55 : 0,
         duration: 300,
       });
       prevFollowRef.current = { lat: position.lat, lng: position.lng };
@@ -214,8 +220,8 @@ function AppContent() {
         selectedOrigin.lat,
         selectedDest.lng,
         selectedDest.lat
-      ).then((route) => {
-        if (route) setRouteData(route);
+      ).then((routeOptions) => {
+        if (routeOptions?.[0]) setRouteData(routeOptions[0]);
       });
     }
   }, [selectedOrigin, selectedDest, calculateRoute, setRouteData]);
@@ -229,9 +235,10 @@ function AppContent() {
     setSelectedOrigin(null);
     setSelectedDest(null);
     setMapClickMode(null);
+    clearRoutes();
     stopNavigation();
     dispatch({ type: 'RESET' });
-  }, [dispatch, stopNavigation]);
+  }, [clearRoutes, dispatch, stopNavigation]);
 
   const handleLocate = useCallback(() => {
     if (isGpsActive) stopGps();
@@ -245,7 +252,7 @@ function AppContent() {
       {/* Map */}
       <MapView onClick={handleMapClick} mapRef={mapRef} cursor={mapClickMode ? 'crosshair' : 'grab'}>
         <RoadLayer visible={roadsLoaded} />
-        <RouteLayer route={ctx.route} />
+        <RouteLayer route={ctx.route} routes={ctx.state === 'ready' ? routes : []} />
         <CurrentRoadLayer road={currentRoad} direction={direction} />
 
         {/* Origin marker */}
@@ -311,6 +318,8 @@ function AppContent() {
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10">
           <RoutePanel
             route={ctx.route}
+            routes={routes.length ? routes : [ctx.route]}
+            onSelectRoute={setRouteData}
             onStartNavigation={handleStartNavigation}
             onCancel={handleCancelRoute}
           />
@@ -370,7 +379,7 @@ function AppContent() {
         <div className="absolute top-24 sm:top-20 left-1/2 -translate-x-1/2 z-10 flex gap-2">
           <button
             onClick={() => setMapClickMode(mapClickMode === 'origin' ? null : 'origin')}
-            className={`px-4 py-2 rounded-full text-sm font-medium shadow-md transition-colors ${
+            className={`min-w-[7.5rem] px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap shadow-md transition-colors ${
               mapClickMode === 'origin'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -380,7 +389,7 @@ function AppContent() {
           </button>
           <button
             onClick={() => setMapClickMode(mapClickMode === 'dest' ? null : 'dest')}
-            className={`px-4 py-2 rounded-full text-sm font-medium shadow-md transition-colors ${
+            className={`min-w-[7.5rem] px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap shadow-md transition-colors ${
               mapClickMode === 'dest'
                 ? 'bg-red-600 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-100'

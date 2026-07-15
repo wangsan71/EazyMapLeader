@@ -5,7 +5,7 @@ import { fetchRoute } from '../services/osrm';
 export function useRouting() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [route, setRoute] = useState<OSRMRoute | null>(null);
+  const [routes, setRoutes] = useState<OSRMRoute[]>([]);
 
   const calculateRoute = useCallback(
     async (
@@ -16,20 +16,20 @@ export function useRouting() {
     ) => {
       setLoading(true);
       setError(null);
+      setRoutes([]);
       try {
         const data = await fetchRoute(originLng, originLat, destLng, destLat);
         if (data.code !== 'Ok' || !data.routes.length) {
           setError('找不到路線');
-          setRoute(null);
+          setRoutes([]);
           return null;
         }
-        const best = data.routes[0];
-        setRoute(best);
-        return best;
+        setRoutes(data.routes);
+        return data.routes;
       } catch (e) {
         const msg = e instanceof Error ? e.message : '路線規劃失敗';
         setError(msg);
-        setRoute(null);
+        setRoutes([]);
         return null;
       } finally {
         setLoading(false);
@@ -39,9 +39,9 @@ export function useRouting() {
   );
 
   const clear = useCallback(() => {
-    setRoute(null);
+    setRoutes([]);
     setError(null);
   }, []);
 
-  return { loading, error, route, calculateRoute, clear };
+  return { loading, error, routes, calculateRoute, clear };
 }

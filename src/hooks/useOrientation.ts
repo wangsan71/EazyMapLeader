@@ -49,7 +49,22 @@ export function useOrientation() {
     };
   }, [isEnabled, handleOrientation]);
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
+    const OrientationEvent = window.DeviceOrientationEvent as typeof DeviceOrientationEvent & {
+      requestPermission?: () => Promise<'granted' | 'denied'>;
+    };
+
+    // iOS 13+ only exposes orientation data after a permission request made
+    // directly from a user gesture (the compass button).
+    if (typeof OrientationEvent?.requestPermission === 'function') {
+      try {
+        const permission = await OrientationEvent.requestPermission();
+        if (permission !== 'granted') return;
+      } catch {
+        return;
+      }
+    }
+
     setIsEnabled(true);
     smoothedRef.current = null;
     setOrientationOffset(0);
@@ -63,9 +78,9 @@ export function useOrientation() {
     setOrientationOffset(0);
   }, []);
 
-  const toggle = useCallback(() => {
+  const toggle = useCallback(async () => {
     if (isEnabled) stop();
-    else start();
+    else await start();
   }, [isEnabled, start, stop]);
 
   const updateOffset = useCallback(
