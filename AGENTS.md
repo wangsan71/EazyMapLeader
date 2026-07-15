@@ -3,7 +3,7 @@
 ## Commands
 
 - Install dependencies with `npm install` (the repository uses `package-lock.json`).
-- Run the Vite dev server with `npm run dev`; it listens on port `5173` and enables LAN access.
+- Run the Vite dev server with `npm run dev`; it targets port `5173` with LAN access (`server.host: true`), and falls back to the next free port (e.g. `5174`) if `5173` is taken.
 - Run `npm run lint` for ESLint, `npx tsc --noEmit` for a focused typecheck, and `npm run build` for the production check (`tsc -b` followed by `vite build`).
 - `npm test` starts Vitest in watch mode; use `npx vitest run` for a non-interactive run or pass a test path/pattern for focused tests.
 
@@ -30,5 +30,6 @@
 
 ## Testing
 
-- No test files exist yet; create them alongside the source with `.test.ts` or `.test.tsx` extensions.
-- Prettier is available as a dev dependency but has no config file; formatting follows the default rules.
+- Existing tests are pure-function suites under `src/utils/` (`geo`, `lanes`, `formatters`) using `.test.ts`; place new tests alongside their source.
+- `vite.config.ts` has no Vitest block, so tests run in the default node environment. `jsdom` and `@testing-library/react` are installed but not wired up—component tests need a `test.environment: 'jsdom'` config (and setup file) added first.
+- Prettier is a dev dependency with no config file; formatting follows its defaults.

@@ -33,7 +33,7 @@ function AppContent() {
   const { currentRoad, direction, update: updateRoadMatch } = useRoadMatching();
   const { loading: routingLoading, error: routingError, calculateRoute } = useRouting();
   const { startNavigation, stopNavigation, checkProgress } = useNavigation();
-  const { mapRef, setBearing, resetBearing } = useMapRotation();
+  const { mapRef, resetBearing } = useMapRotation();
 
   const [roadsLoaded, setRoadsLoaded] = useState(false);
   const [selectedOrigin, setSelectedOrigin] = useState<NavPoint | null>(null);
@@ -91,12 +91,6 @@ function AppContent() {
     const map = mapRef.current.getMap();
 
     if (ctx.state === 'navigating') {
-      map.easeTo({
-        center: [position.lng, position.lat],
-        pitch: 55,
-        duration: 300,
-      });
-
       // Determine heading with graceful fallbacks:
       // 1. GPS heading (most reliable while moving)
       // 2. device orientation (compass) when enabled
@@ -114,10 +108,17 @@ function AppContent() {
         }
       }
 
-      if (heading !== null) setBearing(heading);
+      // Keep all camera changes in one animation. A second easeTo for bearing
+      // would interrupt the center animation and leave the GPS marker off-center.
+      map.easeTo({
+        center: [position.lng, position.lat],
+        bearing: heading ?? map.getBearing(),
+        pitch: 55,
+        duration: 300,
+      });
       prevFollowRef.current = { lat: position.lat, lng: position.lng };
     }
-  }, [position, ctx.state, orientation.isEnabled, orientation.correctedHeading, mapRef, setBearing]);
+  }, [position, ctx.state, orientation.isEnabled, orientation.correctedHeading, mapRef]);
 
   // Reset camera tilt/rotation when leaving navigation mode.
   useEffect(() => {
