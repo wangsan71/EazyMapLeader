@@ -8,7 +8,7 @@ export async function fetchRoute(
   destLng: number,
   destLat: number
 ): Promise<OSRMResponse> {
-  const url = `${OSRM_BASE}/route/v1/driving/${originLng},${originLat};${destLng},${destLat}?overview=full&steps=true&geometries=geojson&alternatives=true`;
+  const url = `${OSRM_BASE}/route/v1/driving/${originLng},${originLat};${destLng},${destLat}?overview=full&steps=true&geometries=geojson&alternatives=3`;
 
   const res = await fetch(url);
   if (!res.ok) {

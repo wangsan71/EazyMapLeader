@@ -44,6 +44,7 @@ function AppContent() {
   const [roadsLoaded, setRoadsLoaded] = useState(false);
   const [selectedOrigin, setSelectedOrigin] = useState<NavPoint | null>(null);
   const [selectedDest, setSelectedDest] = useState<NavPoint | null>(null);
+  const [usesGpsOrigin, setUsesGpsOrigin] = useState(false);
   const [mapClickMode, setMapClickMode] = useState<'origin' | 'dest' | null>(null);
 
   // Load road data
@@ -155,31 +156,32 @@ function AppContent() {
   const handleSearchSelect = useCallback(
     (lat: number, lng: number, name: string) => {
       const point: NavPoint = { lat, lng, name: name.split(',')[0] };
-      // If an origin is already explicitly set, the search result is the destination.
-      if (selectedOrigin) {
-        setSelectedDest(point);
-        setDestination(point);
-        return;
-      }
-      // No origin set: if we have a current GPS fix, use it as the origin
-      // automatically and treat the searched place as the destination.
-      if (position) {
+      // Refresh an automatic origin from the latest GPS fix whenever the
+      // destination changes. Explicitly selected origins remain unchanged.
+      if ((!selectedOrigin || usesGpsOrigin) && position) {
         const gpsOrigin: NavPoint = {
           lat: position.lat,
           lng: position.lng,
           name: '目前位置',
         };
         setSelectedOrigin(gpsOrigin);
+        setUsesGpsOrigin(true);
         setOrigin(gpsOrigin);
+        setSelectedDest(point);
+        setDestination(point);
+        return;
+      }
+      if (selectedOrigin) {
         setSelectedDest(point);
         setDestination(point);
         return;
       }
       // No origin and no GPS: fall back to using the first selection as origin.
       setSelectedOrigin(point);
+      setUsesGpsOrigin(false);
       setOrigin(point);
     },
-    [selectedOrigin, position, setOrigin, setDestination]
+    [selectedOrigin, usesGpsOrigin, position, setOrigin, setDestination]
   );
 
   const handleMapClick = useCallback(
@@ -191,17 +193,19 @@ function AppContent() {
       };
       if (mapClickMode === 'origin') {
         setSelectedOrigin(point);
+        setUsesGpsOrigin(false);
         setOrigin(point);
         setMapClickMode(null);
       } else if (mapClickMode === 'dest') {
         // If no origin has been set yet, use the current GPS position as origin.
-        if (!selectedOrigin && position) {
+        if ((!selectedOrigin || usesGpsOrigin) && position) {
           const gpsOrigin: NavPoint = {
             lat: position.lat,
             lng: position.lng,
             name: '目前位置',
           };
           setSelectedOrigin(gpsOrigin);
+          setUsesGpsOrigin(true);
           setOrigin(gpsOrigin);
         }
         setSelectedDest(point);
@@ -209,7 +213,7 @@ function AppContent() {
         setMapClickMode(null);
       }
     },
-    [mapClickMode, selectedOrigin, position, setOrigin, setDestination]
+    [mapClickMode, selectedOrigin, usesGpsOrigin, position, setOrigin, setDestination]
   );
 
   // Calculate route when both points are set
@@ -234,6 +238,7 @@ function AppContent() {
   const handleCancelRoute = useCallback(() => {
     setSelectedOrigin(null);
     setSelectedDest(null);
+    setUsesGpsOrigin(false);
     setMapClickMode(null);
     clearRoutes();
     stopNavigation();
@@ -252,7 +257,13 @@ function AppContent() {
       {/* Map */}
       <MapView onClick={handleMapClick} mapRef={mapRef} cursor={mapClickMode ? 'crosshair' : 'grab'}>
         <RoadLayer visible={roadsLoaded} />
-        <RouteLayer route={ctx.route} routes={ctx.state === 'ready' ? routes : []} />
+        <RouteLayer
+          route={ctx.route}
+          routes={ctx.state === 'ready' ? routes : []}
+          navigationState={ctx.state}
+          currentStepIndex={ctx.currentStepIndex}
+          gpsPosition={ctx.gpsPosition}
+        />
         <CurrentRoadLayer road={currentRoad} direction={direction} />
 
         {/* Origin marker */}

@@ -32,7 +32,7 @@ export function RoutePanel({
         </button>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-2 sm:mb-3">
+      <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-2 mb-2 sm:mb-3">
         {routes.map((option, index) => {
           const isSelected = option === route;
           return (
