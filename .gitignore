@@ -5,3 +5,19 @@ dist/
 *.tsbuildinfo
 .DS_Store
 .omo/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+*credentials*.json
+*secrets*.json
+
+# Local agent instructions
+AGENTS.md

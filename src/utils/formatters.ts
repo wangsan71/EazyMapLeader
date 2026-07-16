@@ -20,7 +20,32 @@ export function formatSpeed(mps: number): string {
   return `${Math.round(kmh)} km/h`;
 }
 
-export function getManeuverText(type: string, modifier?: string): string {
+export function resolveTurnModifier(
+  modifier?: string,
+  bearingBefore?: number,
+  bearingAfter?: number
+): string | undefined {
+  const isLeft = modifier === 'left' || modifier === 'slight left';
+  const isRight = modifier === 'right' || modifier === 'slight right';
+  if ((!isLeft && !isRight) || bearingBefore == null || bearingAfter == null) {
+    return modifier;
+  }
+
+  const turnAngle = Math.abs(((bearingAfter - bearingBefore + 540) % 360) - 180);
+  if (turnAngle <= 30) return isLeft ? 'slight left' : 'slight right';
+  return isLeft ? 'left' : 'right';
+}
+
+export function getManeuverText(
+  type: string,
+  modifier?: string,
+  bearingBefore?: number,
+  bearingAfter?: number,
+  roadName?: string,
+  previousRoadName?: string
+): string {
+  modifier = resolveTurnModifier(modifier, bearingBefore, bearingAfter);
+  let text: string;
   const modifiers: Record<string, string> = {
     uturn: '迴轉',
     'sharp right': '急右轉',
@@ -33,27 +58,32 @@ export function getManeuverText(type: string, modifier?: string): string {
   };
 
   if (type === 'roundabout' || type === 'rotary') {
-    return '進入圓環';
+    text = '進入圓環';
+  } else if (type === 'arrive') {
+    text = '到達目的地';
+  } else if (type === 'depart') {
+    text = '出發';
+  } else if (modifier) {
+    text = modifiers[modifier] || modifier;
+  } else if (type === 'turn') {
+    text = '轉彎';
+  } else if (type === 'new name') {
+    text = '繼續直行';
+  } else if (type === 'continue') {
+    text = '繼續';
+  } else {
+    text = type;
   }
-  if (type === 'arrive') {
-    return '到達目的地';
-  }
-  if (type === 'depart') {
-    return '出發';
-  }
-  if (modifier) {
-    return modifiers[modifier] || modifier;
-  }
-  if (type === 'turn' && modifier) {
-    return modifiers[modifier] || '轉彎';
-  }
-  if (type === 'new name') {
-    return '繼續直行';
-  }
-  if (type === 'continue') {
-    return '繼續';
-  }
-  return type;
+
+  const entersBridge = isBridgeRoad(roadName) && !isBridgeRoad(previousRoadName);
+  const leavesBridge = !isBridgeRoad(roadName) && isBridgeRoad(previousRoadName);
+  if (type !== 'arrive' && entersBridge) return `${text}上橋`;
+  if (type !== 'depart' && leavesBridge) return `${text}下橋`;
+  return text;
+}
+
+function isBridgeRoad(roadName?: string): boolean {
+  return Boolean(roadName && /(大橋|行車天橋|下層車道)/.test(roadName));
 }
 
 export function getManeuverIcon(
@@ -86,10 +116,14 @@ export function getManeuverIcon(
  */
 export function getManeuverIconKey(
   type: string,
-  modifier?: string
+  modifier?: string,
+  bearingBefore?: number,
+  bearingAfter?: number
 ): string | null {
   if (type === 'arrive' || type === 'depart') return null;
   if (type === 'roundabout' || type === 'rotary') return null;
+
+  modifier = resolveTurnModifier(modifier, bearingBefore, bearingAfter);
 
   const map: Record<string, string> = {
     uturn: 'u_turn',

@@ -15,7 +15,10 @@ export function TurnList({ steps, currentStepIndex }: TurnListProps) {
           key={idx}
           maneuver={step.maneuver.type}
           modifier={step.maneuver.modifier}
+          bearingBefore={step.maneuver.bearing_before}
+          bearingAfter={step.maneuver.bearing_after}
           roadName={step.name}
+          previousRoadName={idx > 0 ? steps[idx - 1].name : undefined}
           distance={step.distance}
           isActive={idx === currentStepIndex}
         />

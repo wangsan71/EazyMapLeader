@@ -5,6 +5,7 @@ import {
   formatDistance,
   formatDuration,
   getManeuverIconKey,
+  getManeuverText,
 } from '../../utils/formatters';
 import { LaneIcon } from '../lane/LaneIcons';
 
@@ -30,7 +31,11 @@ export function NavigationOverlay() {
               {(() => {
                 const t = currentStep?.maneuver.type;
                 const m = currentStep?.maneuver.modifier;
-                const key = currentStep ? getManeuverIconKey(t!, m) : 'straight';
+                const before = currentStep?.maneuver.bearing_before;
+                const after = currentStep?.maneuver.bearing_after;
+                const key = currentStep
+                  ? getManeuverIconKey(t!, m, before, after)
+                  : 'straight';
                 if (key) return <LaneIcon icon={key} size={44} />;
                 return (
                   <span className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg">
@@ -42,7 +47,16 @@ export function NavigationOverlay() {
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-lg truncate">
                 {currentStep
-                  ? currentStep.name || currentStep.maneuver.modifier || '直行'
+                  ? `${getManeuverText(
+                      currentStep.maneuver.type,
+                      currentStep.maneuver.modifier,
+                      currentStep.maneuver.bearing_before,
+                      currentStep.maneuver.bearing_after,
+                      currentStep.name,
+                      ctx.currentStepIndex > 0
+                        ? steps[ctx.currentStepIndex - 1].name
+                        : undefined
+                    )}${currentStep.name ? `，進入${currentStep.name}` : ''}`
                   : '計算中...'}
               </div>
               <div className="text-sm text-gray-600">

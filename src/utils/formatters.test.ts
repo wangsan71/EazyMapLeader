@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { formatDistance, formatDuration, formatSpeed, getManeuverText } from './formatters';
+import {
+  formatDistance,
+  formatDuration,
+  formatSpeed,
+  getManeuverIconKey,
+  getManeuverText,
+} from './formatters';
 
 describe('formatters', () => {
   describe('formatDistance', () => {
@@ -95,6 +101,55 @@ describe('formatters', () => {
 
     it('handles straight', () => {
       expect(getManeuverText('turn', 'straight')).toBe('直行');
+    });
+
+    it('uses slight turns within 30 degrees', () => {
+      expect(getManeuverText('turn', 'left', 10, 340)).toBe('靠左');
+      expect(getManeuverText('turn', 'right', 350, 20)).toBe('靠右');
+      expect(getManeuverIconKey('turn', 'left', 10, 340)).toBe('slight_left');
+      expect(getManeuverIconKey('turn', 'right', 350, 20)).toBe('slight_right');
+    });
+
+    it('uses regular turns beyond 30 degrees', () => {
+      expect(getManeuverText('turn', 'slight left', 10, 339)).toBe('左轉');
+      expect(getManeuverText('turn', 'slight right', 350, 21)).toBe('右轉');
+      expect(getManeuverIconKey('turn', 'slight left', 10, 339)).toBe('left');
+      expect(getManeuverIconKey('turn', 'slight right', 350, 21)).toBe('right');
+    });
+
+    it('adds a bridge instruction without changing the turn', () => {
+      expect(
+        getManeuverText('turn', 'left', 10, 340, '西灣大橋')
+      ).toBe('靠左上橋');
+      expect(
+        getManeuverText('turn', 'right', 350, 40, '馬六甲街行車天橋')
+      ).toBe('右轉上橋');
+      expect(
+        getManeuverText('turn', 'right', 350, 20, '友誼橋大馬路')
+      ).toBe('靠右');
+      expect(
+        getManeuverText('continue', undefined, 0, 0, '友誼大橋')
+      ).toBe('繼續上橋');
+      expect(
+        getManeuverText(
+          'continue',
+          undefined,
+          0,
+          0,
+          '友誼大橋',
+          '友誼大橋'
+        )
+      ).toBe('繼續');
+      expect(
+        getManeuverText(
+          'turn',
+          'slight right',
+          0,
+          40,
+          '友誼橋大馬路',
+          '友誼大橋'
+        )
+      ).toBe('右轉下橋');
     });
   });
 });

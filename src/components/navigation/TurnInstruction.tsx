@@ -6,7 +6,10 @@ import { LaneIcon } from '../lane/LaneIcons';
 interface TurnInstructionProps {
   maneuver: string;
   modifier?: string;
+  bearingBefore: number;
+  bearingAfter: number;
   roadName: string;
+  previousRoadName?: string;
   distance: number;
   isActive?: boolean;
 }
@@ -14,12 +17,27 @@ interface TurnInstructionProps {
 export function TurnInstruction({
   maneuver,
   modifier,
+  bearingBefore,
+  bearingAfter,
   roadName,
+  previousRoadName,
   distance,
   isActive = false,
 }: TurnInstructionProps) {
-  const text = getManeuverText(maneuver, modifier);
-  const iconKey = getManeuverIconKey(maneuver, modifier);
+  const text = getManeuverText(
+    maneuver,
+    modifier,
+    bearingBefore,
+    bearingAfter,
+    roadName,
+    previousRoadName
+  );
+  const iconKey = getManeuverIconKey(
+    maneuver,
+    modifier,
+    bearingBefore,
+    bearingAfter
+  );
 
   return (
     <div
